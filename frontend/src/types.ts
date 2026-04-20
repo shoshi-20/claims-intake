@@ -12,7 +12,7 @@ export enum ClaimType {
 }
 
 export interface Claim {
-  id?: string;
+  _id?: string;
   userId: string;
   claimantName: string;
   policyNumber: string;

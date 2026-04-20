@@ -24,12 +24,13 @@ dotenv.config();
 const app = express();
 connectDB();
 
-app.use(cors(
+app.use(
+  cors(),
   // { origin: 'http://localhost:5173' }
-)); //add specific url
+); //add specific url
 app.use(express.json());
 app.get('/health', (_, res) => res.json({status: 'ok'}));
-// app.use(authenticate);
+app.use(authenticate);
 app.use('/claims', claimsRoutes);
 
 export default app;

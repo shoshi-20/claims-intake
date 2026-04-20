@@ -1,13 +1,17 @@
 import React, {useEffect} from 'react';
 import type {Claim} from '../types';
-import {getClaims} from '../api/claimsApi';
 import StatusBadge from '../components/StatusBadge';
 import {useNavigate} from 'react-router-dom';
 import ClaimCard from '../components/ClaimCard';
+import {isUnauthenticatedError, useClaimsApi} from '../api/useClaimsApi';
+import {useContext} from 'react';
+import {AuthContext} from '../context';
 
 const Claims = () => {
   const navigate = useNavigate();
   const [claims, setClaims] = React.useState<Claim[]>([]);
+  const {getClaims} = useClaimsApi();
+  const {currentUser, logout} = useContext(AuthContext);
 
   useEffect(() => {
     //fetch claims from backend and display them in a table
@@ -16,11 +20,15 @@ const Claims = () => {
         const response = await getClaims();
         setClaims(response);
       } catch (error) {
+        if (isUnauthenticatedError(error)) {
+          navigate('/login');
+          return;
+        }
         console.error('Failed to fetch claims', error);
       }
     };
     fetchClaims();
-  }, []);
+  }, [getClaims, navigate]);
 
   return (
     <>
@@ -39,8 +47,14 @@ const Claims = () => {
           Claims Intake
         </a>
         <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-          <p style={{marginRight: '10px'}}>{'user.email'}</p>
-          <button style={{border: 'none', backgroundColor: 'transparent', cursor: 'pointer'}} onClick={() => console.log('Sign out')}>
+          <p style={{marginRight: '10px'}}>{currentUser?.email ?? 'Unknown user'}</p>
+          <button
+            style={{border: 'none', backgroundColor: 'transparent', cursor: 'pointer'}}
+            onClick={() => {
+              logout();
+              navigate('/login');
+            }}
+          >
             Sign out
           </button>
         </div>
@@ -74,7 +88,7 @@ const Claims = () => {
         <tbody>
           {claims.map((claim) => (
             <tr key={claim.policyNumber}>
-              <td>#{claim.policyNumber}</td>
+              <td>#{claim._id}</td>
               <td>{claim.claimantName}</td>
               <td>{claim.claimType}</td>
               <td>{new Date(claim.incidentDate).toLocaleDateString()}</td>

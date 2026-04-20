@@ -10,6 +10,7 @@ const api = axios.create({
 
 export const login = async (email: string, password: string) => {
   const response = await api.post(`${api.defaults.baseURL}/login`, {email, password});
+  if (!response.data?.token) throw new Error('Unexpected login response from server');
   return response.data;
 };
 

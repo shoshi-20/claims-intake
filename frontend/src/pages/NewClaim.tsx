@@ -2,13 +2,19 @@ import React from 'react';
 import FormField from '../components/FormField';
 import {ClaimStatus, ClaimType, type Claim} from '../types';
 import {useNavigate} from 'react-router-dom';
-import {createClaim, getUploadUrl} from '../api/claimsApi';
 import FileInput from '../components/FileInput';
+import {isUnauthenticatedError, useClaimsApi} from '../api/useClaimsApi';
+import {useContext} from 'react';
+import {AuthContext} from '../context';
 
 const NewClaim = () => {
+  const navigate = useNavigate();
+  const {createClaim, getUploadUrl} = useClaimsApi();
+  const {currentUser} = useContext(AuthContext);
+
   const defaultClaim: Claim = {
-    id: '',
-    userId: '',
+    _id: '',
+    userId: currentUser?.id || '',
     claimantName: '',
     policyNumber: '',
     claimType: ClaimType.AUTO,
@@ -16,7 +22,7 @@ const NewClaim = () => {
     description: '',
     status: ClaimStatus.PENDING,
   };
-  const navigate = useNavigate();
+
   const [claim, setClaim] = React.useState<Claim>(defaultClaim);
   const [document, setDocument] = React.useState<File | null>(null);
 
@@ -36,30 +42,41 @@ const NewClaim = () => {
   };
 
   const createNewClaim = async (newClaim: Claim) => {
-    const response = await createClaim(newClaim);
-    // eslint-disable-next-line no-debugger
-    debugger;
-    if (response?._id) {
-      navigate('/claims');
-      setClaim(defaultClaim);
-      setDocument(null);
-    } else {
-      console.error('Failed to create claim');
+    try {
+      const response = await createClaim(newClaim);
+      if (response?._id) {
+        navigate('/claims');
+        setClaim(defaultClaim);
+        setDocument(null);
+      } else {
+        console.error('Failed to create claim');
+      }
+    } catch (err) {
+      if (isUnauthenticatedError(err)) {
+        navigate('/login');
+        return;
+      }
+      throw err;
     }
   };
 
   const handleSubmit = async () => {
-    // eslint-disable-next-line no-debugger
-    debugger;
     if (!claim.claimantName || !claim.policyNumber || !claim.claimType || !claim.incidentDate || !claim.description) {
       alert('Please fill in all required fields');
       return;
     }
+
     try {
+      if (!currentUser?.id) {
+        navigate('/login');
+        return;
+      }
+
       if (!document) {
         createNewClaim(claim);
         return;
       }
+
       const fileName = document.name;
       const fileType = document.type;
       const {uploadUrl, key} = await getUploadUrl(fileName, fileType);
@@ -79,6 +96,10 @@ const NewClaim = () => {
       const updatedClaim = {...claim, documentKey: key};
       createNewClaim(updatedClaim);
     } catch (err) {
+      if (isUnauthenticatedError(err)) {
+        navigate('/login');
+        return;
+      }
       console.error('Error uploading document:', err);
       alert('Failed to upload document. Please try again.');
       return;

@@ -1,25 +1,23 @@
 import {useNavigate} from 'react-router-dom';
-import {login, register} from '../api/auth.api';
+import {register} from '../api/auth.api';
 import FormField from '../components/FormField';
-import {useState} from 'react';
+import {useContext, useState} from 'react';
+import {AuthContext} from '../context';
 
 interface AuthenticationCardProps {
   action: 'login' | 'register';
-  setUser: (user: string) => void;
 }
 
-const AuthenticationCard: React.FC<AuthenticationCardProps> = ({action, setUser}) => {
+const AuthenticationCard: React.FC<AuthenticationCardProps> = ({action}) => {
   const navigate = useNavigate();
+  const {login} = useContext(AuthContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleLogin = async () => {
     try {
-      const token = await login(email, password);
-      if (token) {
-        setUser(token);
-        navigate('/claims');
-      }
+      await login(email, password);
+      navigate('/claims');
     } catch (error) {
       console.error('Login failed:', error);
       alert('Login failed. Please try again.');
