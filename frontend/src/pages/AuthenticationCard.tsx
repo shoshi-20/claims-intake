@@ -1,4 +1,4 @@
-import {useNavigate} from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 import {register} from '../api/auth.api';
 import FormField from '../components/FormField';
 import {useContext, useState} from 'react';
@@ -33,26 +33,38 @@ const AuthenticationCard: React.FC<AuthenticationCardProps> = ({action}) => {
       alert('Registration failed. Please try again.');
     }
   };
+  const handleSubmit: NonNullable<React.ComponentProps<'form'>['onSubmit']> = async (event) => {
+    event.preventDefault();
+    if (action === 'login') {
+      await handleLogin();
+      return;
+    }
+    await handleRegister();
+  };
 
   return (
-    <div>
-      <h1>Claims Intake</h1>
-      <p>{action === 'login' ? 'Sign in to your account' : 'Create a new account'}</p>
-      <FormField label='Email' type='email' value={email} onChange={(e) => setEmail(e.target.value)} />
-      <FormField label='Password' type='password' value={password} onChange={(e) => setPassword(e.target.value)} />
-      <button onClick={action == 'login' ? handleLogin : handleRegister}>{action === 'login' ? 'Login' : 'Register'}</button>
-      <p>
-        {action === 'login' ? (
-          <>
-            Don't have an account? <a href='/register'>Register</a>
-          </>
-        ) : (
-          <>
-            Already have an account? <a href='/login'>Login</a>
-          </>
-        )}
-      </p>
-    </div>
+    <main className='auth-page'>
+      <form className='auth-card' onSubmit={handleSubmit}>
+        <h1 className='auth-title'>Claims Intake</h1>
+        <p className='auth-subtitle'>{action === 'login' ? 'Sign in to your account' : 'Create a new account'}</p>
+        <FormField label='Email' type='email' value={email} onChange={(e) => setEmail(e.target.value)} />
+        <FormField label='Password' type='password' value={password} onChange={(e) => setPassword(e.target.value)} />
+        <button type='submit' className='btn btn-primary auth-action'>
+          {action === 'login' ? 'Login' : 'Register'}
+        </button>
+        <p className='auth-link-row'>
+          {action === 'login' ? (
+            <>
+              Don't have an account? <Link to='/register'>Register</Link>
+            </>
+          ) : (
+            <>
+              Already have an account? <Link to='/login'>Login</Link>
+            </>
+          )}
+        </p>
+      </form>
+    </main>
   );
 };
 

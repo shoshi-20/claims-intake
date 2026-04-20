@@ -1,20 +1,28 @@
-import React from 'react'
+import React from 'react';
 
 interface FormFieldProps {
   label: string;
   type: string;
   value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   inputStyle?: React.CSSProperties;
 }
 
-const FormField: React.FC<FormFieldProps> = ({ label, type, value, onChange, inputStyle }) => {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start',justifyContent:'center', marginBottom: '15px', width: '100%' }}>
-      <label>{label}</label>
-      <input type={type} value={value} onChange={onChange} style={{ border: '1px solid #000', borderRadius: '4px', padding: '8px', width: '100%', ...inputStyle }} />
-    </div>
-  )
-}
+const FormField: React.FC<FormFieldProps> = ({label, type, value, onChange, inputStyle}) => {
+  const fieldId = `${label.toLowerCase().replace(/\s+/g, '-')}-field`;
 
-export default FormField
+  return (
+    <div className='form-field'>
+      <label className='form-label' htmlFor={fieldId}>
+        {label}
+      </label>
+      {type === 'textarea' ? (
+        <textarea id={fieldId} className='form-textarea' value={value} onChange={onChange} style={inputStyle} />
+      ) : (
+        <input id={fieldId} className='form-input' type={type} value={value} onChange={onChange} style={inputStyle} />
+      )}
+    </div>
+  );
+};
+
+export default FormField;

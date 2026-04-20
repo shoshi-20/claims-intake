@@ -8,17 +8,26 @@ interface IFileInput {
 const FileInput: React.FC<IFileInput> = ({file, setFile}) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const uploadRef = useRef<HTMLDivElement>(null);
+  const [isDragActive, setIsDragActive] = React.useState(false);
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
     event.dataTransfer.dropEffect = 'copy';
+    setIsDragActive(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragActive(false);
   };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
     event.dataTransfer.dropEffect = 'copy';
+    setIsDragActive(false);
     const items = Array.from(event.dataTransfer.items).filter((item) => item.kind === 'file');
     if (items.length > 1) {
       alert('Please upload only one file');
@@ -45,42 +54,24 @@ const FileInput: React.FC<IFileInput> = ({file, setFile}) => {
   }, [file]);
 
   return (
-    <div style={{width: '100%'}}>
+    <div>
       <div
-        style={{
-          height: '60px',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          position: 'relative',
-          border: '1px dashed gray',
-          backgroundColor: `${file ? '#f9faff' : 'transparent'}`,
-          marginBottom: '15px',
-        }}
+        className={`dropzone ${isDragActive ? 'dropzone-active' : ''} ${file ? 'dropzone-filled' : ''}`}
         onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         ref={uploadRef}
       >
         {!file ? (
-          <div
-            style={{display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', height: '100%', gap: '1rem', cursor: 'pointer'}}
-            onClick={() => inputRef.current?.click()}
-          >
+          <button type='button' className='dropzone-trigger' onClick={() => inputRef.current?.click()}>
             <input type='file' onChange={(event) => setFile(event.target.files![0])} hidden ref={inputRef} />
-            <p>Search in Folders</p>
-          </div>
+            Choose or drag a document here
+          </button>
         ) : (
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0 1rem'}}>
-            <p style={{display: 'flex', justifyContent: 'center', gap: '1rem'}}>{file?.name}</p>
-            <button
-              style={{
-                padding: '5px',
-              }}
-              onClick={() => {
-                setFile(null);
-              }}
-            >
-              X
+          <div className='dropzone-file-row'>
+            <p className='dropzone-filename'>{file.name}</p>
+            <button type='button' className='dropzone-remove' onClick={() => setFile(null)}>
+              Remove
             </button>
           </div>
         )}

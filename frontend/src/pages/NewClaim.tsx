@@ -26,7 +26,7 @@ const NewClaim = () => {
   const [claim, setClaim] = React.useState<Claim>(defaultClaim);
   const [document, setDocument] = React.useState<File | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>, field: keyof Claim) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>, field: keyof Claim) => {
     if (field === 'documentKey' && e.target instanceof HTMLInputElement && e.target.files) {
       setDocument(e.target.files[0]);
       return;
@@ -60,7 +60,9 @@ const NewClaim = () => {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit: NonNullable<React.ComponentProps<'form'>['onSubmit']> = async (event) => {
+    event.preventDefault();
+
     if (!claim.claimantName || !claim.policyNumber || !claim.claimType || !claim.incidentDate || !claim.description) {
       alert('Please fill in all required fields');
       return;
@@ -107,42 +109,21 @@ const NewClaim = () => {
   };
 
   return (
-    <div>
-      <h1>New Claim</h1>
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          border: '1px solid #000',
-          borderRadius: '8px',
-          padding: '20px',
-          margin: '0 auto',
-        }}
-      >
-        <div style={{display: 'flex', gap: '20px', width: '100%'}}>
+    <main className='new-claim-page'>
+      <header className='new-claim-header'>
+        <h1>New Claim</h1>
+      </header>
+      <form onSubmit={handleSubmit} className='new-claim-form'>
+        <div className='new-claim-grid'>
           <FormField label='Claimant name' type='text' value={claim?.claimantName || ''} onChange={(e) => handleChange(e, 'claimantName')} />
           <FormField label='Policy number' type='text' value={claim?.policyNumber || ''} onChange={(e) => handleChange(e, 'policyNumber')} />
         </div>
-        <div style={{display: 'flex', gap: '20px', width: '100%'}}>
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              justifyContent: 'center',
-              marginBottom: '15px',
-              width: '100%',
-            }}
-          >
-            <label>Claim type</label>
-            <select
-              value={claim?.claimType || ''}
-              onChange={(e) => handleChange(e, 'claimType')}
-              style={{border: '1px solid #000', borderRadius: '4px', padding: '8px', width: '100%'}}
-            >
+        <div className='new-claim-grid'>
+          <div className='form-field'>
+            <label className='form-label' htmlFor='claim-type-field'>
+              Claim type
+            </label>
+            <select id='claim-type-field' value={claim?.claimType || ''} onChange={(e) => handleChange(e, 'claimType')} className='form-select'>
               {Object.values(ClaimType).map((type) => (
                 <option key={type} value={type}>
                   {type}
@@ -158,30 +139,17 @@ const NewClaim = () => {
           />
         </div>
         <FormField label='Description' type='textarea' value={claim?.description || ''} onChange={(e) => handleChange(e, 'description')} />
-        {/* <FormField
-          label='Attach supporting document'
-          type='file'
-          value=''
-          onChange={(e) => handleChange(e, 'documentKey')}
-          inputStyle={{border: 'dashed'}}
-        /> */}
         <FileInput file={document} setFile={setDocument} />
-        <div style={{display: 'flex', gap: '20px', alignSelf: 'flex-end'}}>
-          <button
-            onClick={handleCancel}
-            style={{backgroundColor: 'red', color: 'white', padding: '10px', border: 'none', borderRadius: '4px', cursor: 'pointer'}}
-          >
+        <div className='new-claim-actions'>
+          <button type='button' className='btn btn-secondary' onClick={handleCancel}>
             Cancel
           </button>
-          <button
-            type='submit'
-            style={{backgroundColor: 'green', color: 'white', padding: '10px', border: 'none', borderRadius: '4px', cursor: 'pointer'}}
-          >
+          <button type='submit' className='btn btn-primary'>
             Submit claim
           </button>
         </div>
       </form>
-    </div>
+    </main>
   );
 };
 

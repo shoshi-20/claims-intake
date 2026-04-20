@@ -5,25 +5,11 @@ interface StatusBadgeProps {
 }
 
 const StatusBadge: React.FC<StatusBadgeProps> = ({status}) => {
-  const statusColors: Record<string, {light: string; dark: string}> = {
-    Pending: {light: 'lightyellow', dark: 'orange'},
-    Approved: {light: 'lightgreen', dark: 'darkgreen'},
-    'In review': {light: 'lightblue', dark: 'darkblue'},
-    Rejected: {light: 'lightcoral', dark: 'darkred'},
-  };
-  return (
-    <div
-      style={{
-        color: statusColors[status]?.dark || 'black',
-        backgroundColor: statusColors[status]?.light || 'lightgray',
-        padding: '4px',
-        borderRadius: '4px',
-        textAlign: 'center',
-      }}
-    >
-      {status}
-    </div>
-  );
+  const statusClassName = status.toLowerCase().replace(/\s+/g, '-');
+  const knownStatuses = new Set(['pending', 'approved', 'in-review', 'rejected']);
+  const badgeClassName = knownStatuses.has(statusClassName) ? `status-badge-${statusClassName}` : 'status-badge-unknown';
+
+  return <div className={`status-badge ${badgeClassName}`}>{status}</div>;
 };
 
 export default StatusBadge;

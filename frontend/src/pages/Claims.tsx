@@ -31,25 +31,16 @@ const Claims = () => {
   }, [getClaims, navigate]);
 
   return (
-    <>
-      <nav
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '10px 20px',
-          backgroundColor: '#f5f5f5',
-          position: 'sticky',
-          top: 0,
-        }}
-      >
-        <a style={{textDecoration: 'none', color: 'black', fontWeight: 'bold'}} href='#'>
+    <main className='claims-page'>
+      <nav className='claims-nav'>
+        <a className='claims-brand' href='#'>
           Claims Intake
         </a>
-        <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-          <p style={{marginRight: '10px'}}>{currentUser?.email ?? 'Unknown user'}</p>
+        <div className='claims-user'>
+          <p className='claims-user-email'>{currentUser?.email ?? 'Unknown user'}</p>
           <button
-            style={{border: 'none', backgroundColor: 'transparent', cursor: 'pointer'}}
+            type='button'
+            className='claims-logout'
             onClick={() => {
               logout();
               navigate('/login');
@@ -59,49 +50,48 @@ const Claims = () => {
           </button>
         </div>
       </nav>
-      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '40px'}}>
+      <div className='claims-header'>
         <h1>All Claims</h1>
-        <button
-          onClick={() => navigate('/claims/new')}
-          style={{backgroundColor: 'white', border: '1px solid gray', borderRadius: '8px', cursor: 'pointer', padding: '10px'}}
-        >
+        <button type='button' className='btn btn-secondary' onClick={() => navigate('/claims/new')}>
           + New claim
         </button>
       </div>
-      <div style={{display: 'flex', justifyContent: 'space-around', padding: '20px'}}>
+      <div className='claims-cards'>
         <ClaimCard text='Total claims' number={claims.length} />
         <ClaimCard text='Approved today' number={claims.filter((claim) => claim.status === 'Approved').length} />
         <ClaimCard text='Pending review' number={claims.filter((claim) => claim.status === 'Pending').length} />
       </div>
-      <table style={{width: '100%', borderCollapse: 'collapse', padding: '20px'}}>
-        <thead>
-          <tr style={{borderBottom: '2px solid black', padding: '10px'}}>
-            <th>ID</th>
-            <th>Claimant</th>
-            <th>Type</th>
-            <th>Filed</th>
-            <th>Description</th>
-            <th>Status</th>
-            <th>Document</th>
-          </tr>
-        </thead>
-        <tbody>
-          {claims.map((claim) => (
-            <tr key={claim.policyNumber}>
-              <td>#{claim._id}</td>
-              <td>{claim.claimantName}</td>
-              <td>{claim.claimType}</td>
-              <td>{new Date(claim.incidentDate).toLocaleDateString()}</td>
-              <td>{claim.description}</td>
-              <td>
-                <StatusBadge status={claim.status} />
-              </td>
-              <td>{claim.documentKey}</td>
+      <div className='claims-table-shell'>
+        <table className='claims-table'>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Claimant</th>
+              <th>Type</th>
+              <th>Filed</th>
+              <th>Description</th>
+              <th>Status</th>
+              <th>Document</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </>
+          </thead>
+          <tbody>
+            {claims.map((claim) => (
+              <tr key={claim.policyNumber}>
+                <td>#{claim.policyNumber}</td>
+                <td>{claim.claimantName}</td>
+                <td>{claim.claimType}</td>
+                <td>{new Date(claim.incidentDate).toLocaleDateString()}</td>
+                <td>{claim.description}</td>
+                <td>
+                  <StatusBadge status={claim.status} />
+                </td>
+                <td>{claim.documentKey}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </main>
   );
 };
 
