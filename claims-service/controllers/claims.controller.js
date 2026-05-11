@@ -1,8 +1,9 @@
 import dotenv from 'dotenv';
 import {S3Client, PutObjectCommand} from '@aws-sdk/client-s3';
 import {getSignedUrl} from '@aws-sdk/s3-request-presigner';
-import {ClaimModel} from '../models/claim.js';
+import {ClaimModel} from '../models/Claim.js';
 import {ClaimStatus} from '../enums.js';
+import {assessClaim, checkDescriptionCompleteness} from '../services/ai.service.js';
 
 dotenv.config();
 
@@ -20,13 +21,54 @@ const createClaim = async (req, res) => {
     const {userId, claimantName, policyNumber, claimType, incidentDate, description, documentKey} = req.body;
     if (
       // !userId ||
-       !claimantName || !policyNumber || !claimType || !incidentDate || !description || !documentKey) {
+      !claimantName ||
+      !policyNumber ||
+      !claimType ||
+      !incidentDate ||
+      !description ||
+      !documentKey
+    ) {
       return res.status(400).json({error: 'All fields are required'});
     }
 
     const claim = new ClaimModel({userId, claimantName, policyNumber, claimType, incidentDate: new Date(incidentDate), description, documentKey});
+    const aiAssessmentResult = await assessClaim({claimType, incidentDate, description});
+    if (aiAssessmentResult.ok) {
+      claim.aiAssessment = aiAssessmentResult.data;
+    } else {
+      console.warn(`AI assessment unavailable: ${aiAssessmentResult.error.message}`);
+    }
+
     await claim.save();
-    res.status(201).json(claim);
+    res.status(201).json({
+      ...claim.toObject(),
+      aiMessage: aiAssessmentResult.ok ? undefined : aiAssessmentResult.error.message,
+    });
+  } catch (err) {
+    res.status(500).json({error: `Server error: ${err.message}`});
+  }
+};
+
+const checkDescription = async (req, res) => {
+  try {
+    const {description, claimType, incidentDate} = req.body;
+    if (!description || !claimType) {
+      return res.status(400).json({error: 'description and claimType are required'});
+    }
+
+    const hintsResult = await checkDescriptionCompleteness(description, claimType, incidentDate);
+    if (hintsResult.ok) {
+      return res.json({...hintsResult.data, aiAvailable: true});
+    }
+
+    return res.json({
+      completeness: 0,
+      missing: [],
+      suggestions: ['AI hints are temporarily unavailable. You can still submit your claim.'],
+      isReadyToSubmit: false,
+      aiAvailable: false,
+      message: hintsResult.error.message,
+    });
   } catch (err) {
     res.status(500).json({error: `Server error: ${err.message}`});
   }
@@ -87,4 +129,4 @@ const getUploadUrl = async (req, res) => {
   }
 };
 
-export {getClaims, createClaim, getClaimById, updateStatus, getUploadUrl};
+export {getClaims, createClaim, getClaimById, updateStatus, getUploadUrl, checkDescription};

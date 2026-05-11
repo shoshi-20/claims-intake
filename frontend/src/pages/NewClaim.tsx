@@ -1,15 +1,19 @@
-import React from 'react';
+import {useEffect, useState, type ChangeEvent, type ComponentProps} from 'react';
 import FormField from '../components/FormField';
-import {ClaimStatus, ClaimType, type Claim} from '../types';
+import {ClaimStatus, ClaimType, type Claim, type DescriptionHints} from '../types';
 import {useNavigate} from 'react-router-dom';
 import FileInput from '../components/FileInput';
 import {isUnauthenticatedError, useClaimsApi} from '../api/useClaimsApi';
 import {useContext} from 'react';
 import {AuthContext} from '../context';
+import DescriptionHintsPanel from '../components/DescriptionHints';
+
+const MIN_HINT_CHARACTERS = 50;
+const HINT_DEBOUNCE_MS = 800;
 
 const NewClaim = () => {
   const navigate = useNavigate();
-  const {createClaim, getUploadUrl} = useClaimsApi();
+  const {createClaim, getUploadUrl, checkDescriptionCompleteness} = useClaimsApi();
   const {currentUser} = useContext(AuthContext);
 
   const defaultClaim: Claim = {
@@ -23,10 +27,53 @@ const NewClaim = () => {
     status: ClaimStatus.PENDING,
   };
 
-  const [claim, setClaim] = React.useState<Claim>(defaultClaim);
-  const [document, setDocument] = React.useState<File | null>(null);
+  const [claim, setClaim] = useState<Claim>(defaultClaim);
+  const [document, setDocument] = useState<File | null>(null);
+  const [hints, setHints] = useState<DescriptionHints | null>(null);
+  const [isHintsLoading, setIsHintsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>, field: keyof Claim) => {
+  useEffect(() => {
+    const description = claim.description?.trim() ?? '';
+    if (description.length < MIN_HINT_CHARACTERS) {
+      setHints(null);
+      setIsHintsLoading(false);
+      return;
+    }
+
+    let isCancelled = false;
+    const timeout = setTimeout(async () => {
+      try {
+        setIsHintsLoading(true);
+        const response = await checkDescriptionCompleteness(description, claim.claimType, claim.incidentDate.toISOString());
+        if (!isCancelled) {
+          setHints(response);
+        }
+      } catch (err) {
+        if (!isCancelled) {
+          setHints(null);
+        }
+
+        if (isUnauthenticatedError(err)) {
+          navigate('/login');
+          return;
+        }
+
+        console.error('Failed to check description completeness', err);
+      } finally {
+        if (!isCancelled) {
+          setIsHintsLoading(false);
+        }
+      }
+    }, HINT_DEBOUNCE_MS);
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(timeout);
+    };
+  }, [claim.description, claim.claimType, claim.incidentDate, checkDescriptionCompleteness, navigate]);
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>, field: keyof Claim) => {
     if (field === 'documentKey' && e.target instanceof HTMLInputElement && e.target.files) {
       setDocument(e.target.files[0]);
       return;
@@ -48,6 +95,7 @@ const NewClaim = () => {
         navigate('/claims');
         setClaim(defaultClaim);
         setDocument(null);
+        setHints(null);
       } else {
         console.error('Failed to create claim');
       }
@@ -60,7 +108,7 @@ const NewClaim = () => {
     }
   };
 
-  const handleSubmit: NonNullable<React.ComponentProps<'form'>['onSubmit']> = async (event) => {
+  const handleSubmit: NonNullable<ComponentProps<'form'>['onSubmit']> = async (event) => {
     event.preventDefault();
 
     if (!claim.claimantName || !claim.policyNumber || !claim.claimType || !claim.incidentDate || !claim.description) {
@@ -68,6 +116,7 @@ const NewClaim = () => {
       return;
     }
 
+    setIsSubmitting(true);
     try {
       if (!currentUser?.id) {
         navigate('/login');
@@ -75,7 +124,7 @@ const NewClaim = () => {
       }
 
       if (!document) {
-        createNewClaim(claim);
+        await createNewClaim(claim);
         return;
       }
 
@@ -96,7 +145,7 @@ const NewClaim = () => {
       }
 
       const updatedClaim = {...claim, documentKey: key};
-      createNewClaim(updatedClaim);
+      await createNewClaim(updatedClaim);
     } catch (err) {
       if (isUnauthenticatedError(err)) {
         navigate('/login');
@@ -105,6 +154,8 @@ const NewClaim = () => {
       console.error('Error uploading document:', err);
       alert('Failed to upload document. Please try again.');
       return;
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -138,14 +189,20 @@ const NewClaim = () => {
             onChange={(e) => handleChange(e, 'incidentDate')}
           />
         </div>
-        <FormField label='Description' type='textarea' value={claim?.description || ''} onChange={(e) => handleChange(e, 'description')} />
         <FileInput file={document} setFile={setDocument} />
+        <FormField label='Description' type='textarea' value={claim?.description || ''} onChange={(e) => handleChange(e, 'description')} />
+        <DescriptionHintsPanel
+          hints={hints}
+          isLoading={isHintsLoading}
+          minChars={MIN_HINT_CHARACTERS}
+          currentLength={claim.description.trim().length}
+        />
         <div className='new-claim-actions'>
           <button type='button' className='btn btn-secondary' onClick={handleCancel}>
             Cancel
           </button>
-          <button type='submit' className='btn btn-primary'>
-            Submit claim
+          <button type='submit' className='btn btn-primary' disabled={isSubmitting}>
+            {isSubmitting ? 'Submitting & analyzing...' : 'Submit claim'}
           </button>
         </div>
       </form>

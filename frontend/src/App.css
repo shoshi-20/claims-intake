@@ -252,39 +252,141 @@
   border-bottom: none;
 }
 
-.status-badge {
+.badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
+  border-color: transparent;
   padding: 0.2rem 0.7rem;
   font-size: 0.85rem;
   font-weight: 700;
 }
 
-.status-badge-pending {
+.badge-warning {
   background-color: var(--color-warning-bg);
   color: var(--color-warning-text);
 }
 
-.status-badge-approved {
+.badge-success {
   background-color: var(--color-success-bg);
   color: var(--color-success-text);
 }
 
-.status-badge-in-review {
+.badge-info {
   background-color: var(--color-info-bg);
   color: var(--color-info-text);
 }
 
-.status-badge-rejected {
+.badge-danger {
   background-color: var(--color-danger-bg);
   color: var(--color-danger-text);
 }
 
-.status-badge-unknown {
+.badge-unknown {
   background-color: #edf2f6;
   color: #4e667f;
+}
+
+.ai-risk-badge-button {
+  cursor: pointer;
+}
+
+.ai-assessment-panel {
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-md);
+  display: grid;
+  gap: var(--space-md);
+}
+
+.ai-assessment-summary {
+  margin: 0;
+  color: var(--color-info-text);
+}
+
+.ai-assessment-details {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.ai-assessment h4 {
+  margin-bottom: var(--space-2xs);
+}
+
+.ai-assessment p {
+  margin: 0;
+}
+
+.ai-assessment-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: var(--space-2xs);
+}
+
+.description-hints,
+.description-hints-empty,
+.description-hints-loading {
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-soft);
+  padding: var(--space-md);
+}
+
+.description-hints-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.description-hints-header h3 {
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.description-hints-score {
+  color: var(--color-heading);
+  font-weight: 700;
+}
+
+.description-hints-bar {
+  width: 100%;
+  height: 0.55rem;
+  background: #dfe8f1;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: var(--space-sm);
+}
+
+.description-hints-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #d17e00 0%, #1c8c57 100%);
+}
+
+.description-hints-ready,
+.description-hints-not-ready {
+  margin-top: var(--space-sm);
+  font-weight: 600;
+}
+
+.description-hints-ready {
+  color: var(--color-success-text);
+}
+
+.description-hints-not-ready {
+  color: var(--color-warning-text);
+}
+
+.description-hints-list {
+  margin-top: var(--space-xs);
+  margin-bottom: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: var(--space-2xs);
 }
 
 .new-claim-page {
@@ -392,12 +494,14 @@
   }
 }
 
+/* tablet */
 @media (max-width: 63.99rem) {
   .claims-cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
+/* phone */
 @media (max-width: 47.99rem) {
   .auth-card,
   .new-claim-form {
@@ -430,5 +534,14 @@
 
   .new-claim-actions .btn {
     width: 100%;
+  }
+
+  .ai-assessment-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .description-hints-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

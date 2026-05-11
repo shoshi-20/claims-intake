@@ -10,3 +10,7 @@ export const ClaimType = {
   Home: 'Home',
   Health: 'Health',
 };
+
+export const riskLevels = {Low: 'Low', Medium: 'Medium', High: 'High'};
+
+export const suggestedActions = {FastTrack: 'Fast-track', StandardReview: 'Standard Review', FlagForInvestigation: 'Flag for Investigation'};

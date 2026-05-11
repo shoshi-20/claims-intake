@@ -6,15 +6,17 @@ import ClaimCard from '../components/ClaimCard';
 import {isUnauthenticatedError, useClaimsApi} from '../api/useClaimsApi';
 import {useContext} from 'react';
 import {AuthContext} from '../context';
+import AIRiskBadge from '../components/AIRiskBadge';
+import AIAssessmentPanel from '../components/AIAssessmentPanel';
 
 const Claims = () => {
   const navigate = useNavigate();
   const [claims, setClaims] = React.useState<Claim[]>([]);
+  const [expandedClaimId, setExpandedClaimId] = React.useState<string | null>(null);
   const {getClaims} = useClaimsApi();
   const {currentUser, logout} = useContext(AuthContext);
 
   useEffect(() => {
-    //fetch claims from backend and display them in a table
     const fetchClaims = async () => {
       try {
         const response = await getClaims();
@@ -65,29 +67,54 @@ const Claims = () => {
         <table className='claims-table'>
           <thead>
             <tr>
-              <th>ID</th>
+              <th>Policy</th>
               <th>Claimant</th>
               <th>Type</th>
               <th>Filed</th>
               <th>Description</th>
               <th>Status</th>
               <th>Document</th>
+              <th>AI Risk</th>
             </tr>
           </thead>
           <tbody>
-            {claims.map((claim) => (
-              <tr key={claim.policyNumber}>
-                <td>#{claim.policyNumber}</td>
-                <td>{claim.claimantName}</td>
-                <td>{claim.claimType}</td>
-                <td>{new Date(claim.incidentDate).toLocaleDateString()}</td>
-                <td>{claim.description}</td>
-                <td>
-                  <StatusBadge status={claim.status} />
-                </td>
-                <td>{claim.documentKey}</td>
-              </tr>
-            ))}
+            {claims.map((claim) => {
+              const claimKey = claim._id ?? claim.policyNumber;
+              const isExpanded = claim._id ? expandedClaimId === claim._id : false;
+
+              return (
+                <React.Fragment key={claimKey}>
+                  <tr>
+                    <td>{claim.policyNumber}</td>
+                    <td>{claim.claimantName}</td>
+                    <td>{claim.claimType}</td>
+                    <td>{new Date(claim.incidentDate).toLocaleDateString()}</td>
+                    <td>{claim.description}</td>
+                    <td>
+                      <StatusBadge status={claim.status} />
+                    </td>
+                    <td>{claim.documentKey ?? '—'}</td>
+                    <td>
+                      <AIRiskBadge
+                        riskLevel={claim.aiAssessment?.riskLevel}
+                        onClick={
+                          claim.aiAssessment && claim._id
+                            ? () => setExpandedClaimId((current) => (current === claim._id ? null : (claim._id ?? null)))
+                            : undefined
+                        }
+                      />
+                    </td>
+                  </tr>
+                  {isExpanded && claim.aiAssessment ? (
+                    <tr>
+                      <td colSpan={8}>
+                        <AIAssessmentPanel assessment={claim.aiAssessment} />
+                      </td>
+                    </tr>
+                  ) : null}
+                </React.Fragment>
+              );
+            })}
           </tbody>
         </table>
       </div>
